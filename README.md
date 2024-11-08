@@ -1,4 +1,4 @@
 # browser-rs
 
-Most basic static page renderer written in rust. The browser contains it's
-custom html parser and renderer.
+Most basic static html parser/renderer written in rust. The browser bundles it's
+custom html parser and a renderer based on opengl gluim.

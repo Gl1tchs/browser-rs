@@ -10,4 +10,7 @@ edition = "2021"
 
 [dependencies]
 html = { path = "crates/html" }
-glium = "0.36.0"
+glium = "0.32.0"
+nalgebra-glm = "0.3"
+glyph_brush = "0.7"
+glium-glyph = "0.14.0"
