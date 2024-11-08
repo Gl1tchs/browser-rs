@@ -10,3 +10,4 @@ edition = "2021"
 
 [dependencies]
 html = { path = "crates/html" }
+glium = "0.36.0"
