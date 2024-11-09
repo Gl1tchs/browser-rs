@@ -1,10 +1,12 @@
+use std::collections::HashMap;
+
 use crate::lexer::*;
 
 #[derive(Debug)]
 pub enum Node {
     Element {
         tag: String,
-        attributes: Vec<(String, String)>,
+        attributes: HashMap<String, String>,
         children: Vec<Node>,
     },
     Text(String),
@@ -32,7 +34,9 @@ impl Parser {
 
         while index < self.tokens.len() {
             match &self.tokens[index] {
-                Token::TagBegin(tag) => elements.push(self.parse_element(tag.clone(), &mut index)),
+                Token::TagBegin(tag) => {
+                    elements.push(self.parse_element(tag.clone(), &mut index))
+                }
                 Token::EOF => break,
                 _ => index += 1,
             }
@@ -43,7 +47,7 @@ impl Parser {
 
     fn parse_element(&self, tag: String, index: &mut usize) -> Node {
         let mut children = Vec::new();
-        let mut attributes = Vec::new();
+        let mut attributes = HashMap::new();
 
         *index += 1;
 
@@ -62,7 +66,7 @@ impl Parser {
                     break;
                 }
                 Token::Attribute(attribute) => {
-                    attributes.push(attribute.clone());
+                    attributes.insert(attribute.0.clone(), attribute.1.clone());
                     *index += 1;
                 }
                 Token::Content(content) => {
@@ -183,8 +187,11 @@ mod tests {
             assert_eq!(attributes.len(), 2);
             assert!(children.is_empty());
 
-            assert_eq!(attributes[0], ("src".to_string(), "image.png".to_string()));
-            assert_eq!(attributes[1], ("alt".to_string(), "An image".to_string()));
+            assert_eq!(
+                attributes.get("src").unwrap(),
+                &"image.png".to_string()
+            );
+            assert_eq!(attributes.get("alt").unwrap(), &"An image".to_string());
         } else {
             panic!("Expected an Element node");
         }

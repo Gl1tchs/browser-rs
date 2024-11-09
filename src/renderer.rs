@@ -44,7 +44,6 @@ impl Default for TextDrawConfig {
 pub struct Renderer<'a> {
     camera: Camera,
     screen_size: (u32, u32),
-    aspect_ratio: f32,
     glyph_brush: GlyphBrush<'a, FontArc>,
     // quad resources
     quad_vb: VertexBuffer<QuadVertex>,
@@ -98,7 +97,6 @@ impl<'a> Renderer<'a> {
         let camera = Camera::default();
 
         let screen_size = (0, 0);
-        let aspect_ratio = 0.0;
 
         // Initialize glyph_brush with font
         // TODO: let user select their font
@@ -112,7 +110,6 @@ impl<'a> Renderer<'a> {
         Self {
             camera,
             screen_size,
-            aspect_ratio,
             glyph_brush,
             quad_vb,
             quad_ib,
@@ -124,9 +121,7 @@ impl<'a> Renderer<'a> {
 
     pub fn update_dimension(&mut self, dims: (u32, u32)) {
         self.screen_size = dims;
-
-        self.aspect_ratio = dims.0 as f32 / dims.1 as f32;
-        self.camera.aspect_ratio = self.aspect_ratio;
+        self.camera.screen_size = dims;
     }
 
     pub fn begin(&mut self) {
@@ -183,27 +178,20 @@ impl<'a> Renderer<'a> {
             self.begin();
         }
 
-        let ndc_x = ((screen_pos.0 / self.screen_size.0 as f32) * 2.0 - 1.0)
-            * self.aspect_ratio;
-        let ndc_y = 1.0 - (screen_pos.1 / self.screen_size.1 as f32) * 2.0;
-
-        let half_width = bounds.0 / self.screen_size.0 as f32;
-        let half_height = bounds.1 / self.screen_size.1 as f32;
-
         let v1 = QuadVertex {
-            position: [ndc_x - half_width, ndc_y - half_height],
+            position: [screen_pos.0, screen_pos.1],
             color,
         };
         let v2 = QuadVertex {
-            position: [ndc_x - half_width, ndc_y + half_height],
+            position: [screen_pos.0, screen_pos.1 + bounds.1],
             color,
         };
         let v3 = QuadVertex {
-            position: [ndc_x + half_width, ndc_y + half_height],
+            position: [screen_pos.0 + bounds.0, screen_pos.1 + bounds.1],
             color,
         };
         let v4 = QuadVertex {
-            position: [ndc_x + half_width, ndc_y - half_height],
+            position: [screen_pos.0 + bounds.0, screen_pos.1],
             color,
         };
 
@@ -235,16 +223,13 @@ impl<'a> Renderer<'a> {
 
         // if background color is not transparent then a draw quad
         if cfg.bg_color[3] != 0.0 {
-            let line_count = text.chars().filter(|c| *c == '\n').count() + 1;
-            let line_height = size * line_count as f32 * 2.0;
-
             let quad_bounds = (
                 if cfg.bounds.0 == f32::INFINITY {
                     self.screen_size.1 as f32
                 } else {
                     cfg.bounds.0
                 },
-                line_height,
+                get_line_height_of_text(text, size),
             );
 
             self.draw_quad(display, cfg.screen_pos, quad_bounds, cfg.bg_color);
@@ -252,4 +237,9 @@ impl<'a> Renderer<'a> {
 
         self.glyph_brush.queue(section);
     }
+}
+
+pub fn get_line_height_of_text(text: &str, size: f32) -> f32 {
+    let line_count = text.chars().filter(|c| *c == '\n').count() + 1;
+    size * line_count as f32 * 2.0
 }
